@@ -12,3 +12,10 @@
 # Quaries should also be able to be made though this interface 
 #
 #...Note* If this file becomes too large then split into a directory of files.
+
+from . import database
+from . import web
+
+
+def historical(ticker, start, end):
+    pass

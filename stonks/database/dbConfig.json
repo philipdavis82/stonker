@@ -1,3 +1,15 @@
 {
+    "base-form":
+    {
+        "name"      : "",
+        "ticker"    : "",
+        "date"      : 0 ,
+        "open"      : 0 ,
+        "high"      : 0 ,
+        "low"       : 0 ,
+        "close"     : 0 ,
+        "volume"    : 0 ,
+        "marketcap" : 0
+    },
     "path":""
 }
