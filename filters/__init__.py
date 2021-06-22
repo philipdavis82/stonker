@@ -8,7 +8,7 @@ FILTERS = []
 def import_filters():
     global FILTERS
     print(__global__.HOME_DIR)
-    searchPath = os.path.join(__global__.HOME_DIR,"filters","*.py")
+    searchPath = os.path.join(__global__.HOME_DIR,"filters","*")
     files = [ os.path.split(file)[1] for file in glob.glob(searchPath) if file.count("__")==0 ]
     for file in files:
         file = "filters."+file.replace(".py","")

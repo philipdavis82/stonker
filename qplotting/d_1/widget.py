@@ -1132,28 +1132,24 @@ class PlotWidget(QWidget):
         self.navBar = NavigationToolbar2QT(self.canvas,self)
         self.App = application
         # Filter for right click on pan or zoom in navbar
-        def event_filter(event):
-            if event.button == 3:
-                if self.navBar._active == 'PAN':
-                    self.navBar.release_pan(event)
-                if self.navBar._active == 'ZOOM': 
-                    self.navBar.release_zoom(event)
-        self.navBar.press = event_filter
+        # self.navBar._old_press_zoom = self.navBar.press_zoom
+        # self.navBar._old_press_pan = self.navBar.press_pan
+        # self.navBar.press_zoom = lambda event: self.navBar.release_zoom(event) if event.button == 3 else self.navBar._old_press_zoom(event)
+        # self.navBar.press_pan  = lambda event: self.navBar.release_pan(event)  if event.button == 3 else self.navBar._old_press_pan(event)
         self.navBar._actions['zoom'].triggered.emit() # Set Zoom as default state 
+
+        self.op_mapping = {}
 
         if(withToolbar):
             self.toolbar = plot_toolbar(self)
             self.setupInteralWidgets()
             self.setupToolbar()
-            self.layout.addWidget(self.toolbar,1,1,1,2)
-
-        self.op_mapping = {}
-
+            self.layout.addWidget(self.toolbar,1,1,1,2)    
+            self.buildOpMap()
+        
         self.layout.addWidget(self.canvas,2,1)
         self.layout.addWidget(self.navBar,3,1)
         self.resize(width,height)
-
-        self.buildOpMap()
 
     def buildOpMap(self):
         self.op_mapping["canvas"] = self.canvas.parseOpStr

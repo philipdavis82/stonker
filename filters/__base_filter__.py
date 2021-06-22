@@ -103,10 +103,17 @@ added to the arguments returned.
 # Base Filter Class
 # All filters should derive from this class.
 
-class __FILTER_BASE():
-    def __init__(self,target_name,*args,**kwargs):
-        self.__iter = None
-        self.__target_name = target_name
+class FilterBase():
+    def __init__(self,*args,**kwargs):
+        # Main Functions
+        self.__filter = None
+        self.__sort   = None
+        self.__iter   = None
+        ## Parameters that define the filter
+        self.__filterParametersDefinitions = {}
+        self.__filterParameters = {}
+        ## return dictionary
+        self.__returnDictionary = {}
         pass
 
     def __iter__(self):
@@ -116,8 +123,82 @@ class __FILTER_BASE():
     def setItterable(self,itterable):
         self.__iter = itterable
 
-    def filter(self,start_date,end_date):
-        raise Exception("Filter Method Not Implemented")
+    def setParameter(self,name:str,default):
+        self.__filterParametersDefinitions[name] = type(default)
+        self.__filterParameters[name]            = default
+
+    def getParemeter(self,name):
+        return self.__filterParameters[name]
+
+    def setFilter(self,filterfn):
+        self.__filter = filterfn
+
+    def filter(self,target,date,*args,**kwargs):
+        if self.__filter is None: raise Exception("Filter Method Not Implemented")
+        self.__filter(target,date,self.__filterParameters.copy(),*args,**kwargs)
+
+    def sort(self,target_list=None,options=None):
+        if target_list is None: return # Return options
+        if options is None:     raise Exception("Must Have Options in sort")
+        if self.__sort is None: raise Exception("Sort Function not implemented")
+
+
+# A Class to structure the return object that the user interfaces are expecting
+class FilterReturn():
+    ## Build Up Return Values
+    def __init__(self):
+        # Clear the return results
+        self.__returnDictionary = {}
+
+    def __call__(self):
+        return self.__returnDictionary.copy()
+
+    # def uySellHold(self,buy,sell,hold):
+        # if buy < 0 or sell < 0 or hold < 0: raise Exception("Metrics Must be a positive number")
+        # if buy+sell+hold >1.001 or buy+sell+hold < .999:
+            # raise Exception("Metrics must add to 1")
+        # self.__returnDictionary['buy']  = buy
+        # self.__returnDictionary['sell'] = sell
+        # self.__returnDictionary['hold'] = hold
+
+    def buy(self,val):
+        if val < 0 or val > 1: raise Exception("Buy must be between 0 and 1")
+        self.__returnDictionary['buy'] = val
+
+    def sell(self,val):
+        if val < 0 or val > 1: raise Exception("Sells must be between 0 and 1")
+        self.__returnDictionary['sell'] = val
+
+    def hold(self,val):
+        if val < 0 or val > 1: raise Exception("Hold must be between 0 and 1")
+        self.__returnDictionary['hold'] = val
+
+    def confidance(self,val):
+        if val < 0 or val > 1: raise Exception("Confidance must be between 0 and 1")
+        self.__returnDictionary['confidance'] = val
+
+    def plot(self,x,y,z=None,a=None,*args,title:str="plot",label:str="label"):
+        # Check 3d -> 2d -> 1d
+        if   not a is None: arg_table = self.__do3DPlot(x,y,z,a)
+        elif not z is None: arg_table = self.__do2DPlot(x,y,z)
+        else              : arg_table = self.__do1DPlot(x,y)
+        # Check for initialized return for plots
+        if self.__returnDictionary.get("plot") is None:
+            self.__returnDictionary["plot"] = []
+        plots = self.__returnDictionary["plot"]
+        
+        for p in plots:
+            if p["title"] == title: ptable = p; break
+        else:
+            ptable = {}
+
+        ptable["title"] = title
+        ptable[label]   = arg_table
+        
+    ## Background Functions
+    def __do3DPlot(self,x,y,z,a) : return {"x":x,"y":y,"z":z,"a":a}
+    def __do2DPlot(self,x,y,z)   : return {"x":x,"y":y,"z":z}
+    def __do1DPlot(self,x,y)     : return {"x":x,"y":y}
 
 __FILTER_TEMPLATE = lambda **kwargs: \
 f"""

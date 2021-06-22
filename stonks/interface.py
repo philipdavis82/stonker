@@ -16,6 +16,9 @@
 from . import database
 from . import web
 
+# Historical Data is given as a object
+historical = web.yahoo.historical
 
-def historical(ticker, start, end):
-    pass
+
+# def historical(ticker, start, end):
+    # pass

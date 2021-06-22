@@ -137,8 +137,8 @@ class PlotCanvas(FigureCanvasQTAgg):
         # print("y:",event.y())
         
     def mousePressEvent(self,event):
-        if (event.button() == Qt.MiddleButton and self.key_combo.count(K.ctl)) or \
-            (event.button() == Qt.MiddleButton and self.key_combo.count(K.shift)):
+        if (event.button() == Qt.MiddleButton and self.key_combo.count(utils.K.ctl)) or \
+            (event.button() == Qt.MiddleButton and self.key_combo.count(utils.K.shift)):
             self.rescale_all(self.getAxisFromMouse(event))  
         elif event.button() == Qt.MiddleButton:
             self.rescale_y(self.getAxisFromMouse(event))

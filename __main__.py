@@ -17,7 +17,7 @@ from PyQt5.QtWidgets import *
 import qtapp
 if __name__ == "__main__":
     qapp = QApplication(sys.argv)
-    with open(os.path.join("css","dark.qss"),'r') as file:
+    with open(os.path.join("qtapp","css","dark.qss"),'r') as file:
         styletxt = file.read()
     qapp.setStyleSheet(styletxt)
     win = qtapp.mainWindow()

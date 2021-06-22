@@ -1,4 +1,5 @@
 
+from qtapp.appwidgets.C_QNavigator import C_QNavigatorDock
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
@@ -7,6 +8,10 @@ import stonks
 import filters
 import datetime
 import qplotting
+
+# Get App specific widgets
+from . import appwidgets
+from . import subwindows
 
 class Action(QAction):
     def __init__(self,*args,shortcut=None):
@@ -27,22 +32,22 @@ class mainWindow(QMainWindow):
         self.setGeometry(100,100,1500,1500)
         self.centralWidget = QWidget(self)
         self.layout = QGridLayout(self.centralWidget)
+        self.layout.setSpacing(0)
+        self.layout.setContentsMargins(0,0,0,0)
+        self.setContentsMargins(0,0,0,0)
+
         self.setCentralWidget(self.centralWidget)
 
         # TODO: Add Drag function
         self.setWindowFlags(Qt.Window | Qt.FramelessWindowHint)
   
-
-        # File Memory
-        self.stonkNames = []
-        self.currentFile = None
+        # Internal Memory
+        self.mainWidgetMap = {}
+        self.currentMainWidget = None
 
         # Build the gui
         self.createMenu()
         self.createInputs()
-        
-        # Connect Filters
-        self.updateCompanyList()
 
      
     def createMenu(self):
@@ -58,7 +63,7 @@ class mainWindow(QMainWindow):
         ## File Menu
         #
         fileMenu = self.mainMenu.addMenu('&File')
-        print(fileMenu)
+
         # Actions
         # loadAct = Action("load",self).connect(self.openFile)
         # self.mainMenu.addAction(loadAct)
@@ -68,27 +73,30 @@ class mainWindow(QMainWindow):
         self.mainMenu.addAction(exitAct)
         pass
 
+    def createWidgets(self):
+        self.searchWidget = subwindows.SearchWidget(self)
+        self.searchWidget.setVisible(False)
+        self.mainWidgetMap['search'] = self.searchWidget
+
+        self.mainWidgetMap['dummy'] = QWidget(self)
+        self.mainWidgetMap['dummy'].setVisible(False)
+        pass
+
     def createInputs(self):
+        self.createWidgets()
         # Left Side
-        self.filterLine = QLineEdit(self)
-        self.filterLine.textChanged.connect(self.filterStonks)
-        # Loaded Files
-        self.fileList = QListWidget(self)
-        # self.fileList.setMaximumWidth(700)
-        self.fileList.itemDoubleClicked.connect(self.temp_PlotData)
-        # Button To Load File
-        # self.fileLoadBtn = QPushButton("Load",self)
-        # self.fileLoadBtn.setMaximumWidth(300)
-        # Right Side
-        # self.fileOptions = QWidget(self)
+        self.leftNavigator = appwidgets.C_QNavigator(self)
+        for name,widget in self.mainWidgetMap.items(): self.leftNavigator.addButton(name,widget)
+        self.leftNavigator.setMaximumWidth(200)
+        self.leftNavigator.setMinimumWidth(200)
+        self.addDockWidget(Qt.LeftDockWidgetArea,C_QNavigatorDock(self,self.leftNavigator))
+        self.leftNavigator.onPress.connect(self.mainWidgetChanged)
+        # self.layout.addWidget(self.leftNavigator,0,0)
+
+        self.mainWidgetChanged('search')
+        # self.layout.addWidget(self.searchWidget,0,1)
+
         
-        # Add To Layout
-        # Left
-        self.layout.addWidget(self.filterLine,0,0)
-        self.layout.addWidget(self.fileList,1,0)
-        # self.layout.addWidget(self.fileLoadBtn,2,0,1,1)
-        # Right
-        # self.layout.addWidget(self.fileOptions,0,1,1,3)
         pass
 
         
@@ -105,41 +113,10 @@ class mainWindow(QMainWindow):
                     return False
         return super(mainWindow, self).eventFilter(watched, event)
     
-    def updateCompanyList(self,*args):
-        self.fileList.clear()
-        self.stonkNames = list(stonks.tickers.getStockTickers().keys())
-        self.fileList.addItems(self.stonkNames)
-            
-    def filterStonks(self,*args):
-        filterText = self.filterLine.text()
-        filterText = filterText.split(" ")
-        foundStonks = set([])
-        for text in filterText:
-            filterFn = lambda stonk: str.count(stonk.lower(),text.lower())>0
-            temp = set(filter(filterFn,self.stonkNames))
-            foundStonks |= temp
-        foundStonks = list(foundStonks)
-        self.fileList.clear()
-        self.fileList.addItems(foundStonks)
-
-    def openFile(self):
-        pass
-
-    def temp_PlotData(self,item):
-        cname = item.text()
-        info = stonks.tickers.getStockTickerInfo(cname)
-        ticker = info["ticker"]
-        today = datetime.datetime.today()
-        last2y = datetime.datetime(today.year-20,today.month,today.day)
-        data = stonks.web.yahoo.historical(ticker,last2y,today)
-        if data is None: return print(f"Failed to get data {ticker}")
-        time = data._time##.astype(float)#[ t.astype(float) for t in data._time ]
-        high = data._high
-        low = data._low
-        canvas = qplotting.plot_canvas()
-        widget = qplotting.plot_widget(canvas)
-        canvas.setPlot(time,high,label="high")
-        canvas.setPlot(time,low,label="low")
-        canvas.setFigureName(cname)
-        canvas.plot()
-        widget.show()
+    def mainWidgetChanged(self,widgetName):
+        if not self.currentMainWidget is None: 
+            self.layout.removeWidget(self.currentMainWidget)
+            self.currentMainWidget.setVisible(False)
+        self.currentMainWidget = self.mainWidgetMap[widgetName]
+        self.layout.addWidget(self.currentMainWidget,0,1)
+        self.currentMainWidget.setVisible(True)
